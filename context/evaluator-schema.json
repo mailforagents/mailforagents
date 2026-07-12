@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["decision", "hard_gates_pass", "baseline_total", "candidate_total", "evidence", "residual_risk"],
+  "properties": {
+    "decision": { "type": "string", "enum": ["keep", "revert"] },
+    "hard_gates_pass": { "type": "boolean" },
+    "baseline_total": { "type": "integer", "minimum": 5, "maximum": 25 },
+    "candidate_total": { "type": "integer", "minimum": 5, "maximum": 25 },
+    "evidence": { "type": "string", "minLength": 1 },
+    "residual_risk": { "type": "string", "minLength": 1 }
+  }
+}
