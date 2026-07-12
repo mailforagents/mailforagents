@@ -608,16 +608,17 @@ Community requirements:
 
 SQLite is a deliberate v1 simplification, not a claim of unlimited distributed scalability.
 
-Initial hosted operation may use:
+Initial hosted operation uses:
 
-- one active application instance per shard;
-- one SQLite database per shard or high-value tenant;
+- one active application instance per database;
+- one separate SQLite database per hosted product workspace;
+- one SQLite database per cloud control-plane instance for accounts, subscriptions, entitlements, provisioning jobs, and Stripe webhook idempotency;
 - workspace-to-shard routing;
 - object storage for backups and exports;
 - bounded event retention;
 - separate web processes only when they do not violate single-writer assumptions.
 
-SeaORM keeps a future PostgreSQL migration possible, but PostgreSQL is not a v1 dependency or hidden requirement.
+The v1 product, marketing site where persistence is ever required, and private cloud control plane use SQLite exclusively. PostgreSQL, MySQL, Redis, and external queues are not v1 dependencies or hidden requirements. Scaling occurs through complete tenant/database boundaries and single-writer routing, not concurrent writers against a shared file. SeaORM may preserve future backend portability, but no alternative database is designed or operated in v1.
 
 ---
 
@@ -3520,6 +3521,7 @@ MVP does not require a freeform visual canvas, multiple email providers, a CRM p
 10. The v1 catalogue contains PB-01 through PB-25.
 11. Public expert sources may be attributed, but no endorsement is implied.
 12. The visual system is original while drawing on the restrained developer-console qualities visible in xAI’s public console.
+13. All v1 repositories use SQLite exclusively for persistence; hosted product workspaces receive separate database files and the cloud control plane remains single-writer per database.
 
 ---
 
@@ -3529,14 +3531,13 @@ MVP does not require a freeform visual canvas, multiple email providers, a CRM p
 2. Will the hosted product support only BYO SES at launch, or also a managed shared sending account?
 3. Is the first ideal customer technical B2B SaaS, consultants, or agencies? The PRD recommends technical B2B SaaS first.
 4. Should self-hosted multi-user collaboration be fully included from day one? This PRD says yes.
-5. Will cloud workspaces use shared SQLite shards or one database per tenant initially?
-6. Which model provider is first-class for agent drafting, if any? The architecture remains provider-neutral.
-7. Is workflow YAML intended as a hand-authored public contract in v1, or primarily an export format until schemas stabilize?
-8. Which twelve playbooks receive full launch-quality copy first?
-9. Will opt-in aggregate benchmark data be collected for community validation?
-10. What operational thresholds pause marketing sends in hosted mode?
-11. Is an ActiveCampaign importer required for public launch or the first post-launch milestone?
-12. Will private agency playbooks be a cloud-only commercial feature or included self-hosted?
+5. Which model provider is first-class for agent drafting, if any? The architecture remains provider-neutral.
+6. Is workflow YAML intended as a hand-authored public contract in v1, or primarily an export format until schemas stabilize?
+7. Which twelve playbooks receive full launch-quality copy first?
+8. Will opt-in aggregate benchmark data be collected for community validation?
+9. What operational thresholds pause marketing sends in hosted mode?
+10. Is an ActiveCampaign importer required for public launch or the first post-launch milestone?
+11. Will private agency playbooks be a cloud-only commercial feature or included self-hosted?
 
 ---
 
@@ -3680,5 +3681,4 @@ Before public launch, verify:
 ## Final product statement
 
 > **Mail for Agents is an open-source, agent-native lifecycle email automation platform. It connects to AWS SES, installs evidence-informed business playbooks, executes deterministic workflows, and lets humans and agents operate the customer lifecycle through one inspectable system.**
-
 
