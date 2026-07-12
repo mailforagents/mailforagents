@@ -414,6 +414,8 @@ The v1 community edition is a **single Rust application** with three internal ro
 
 They run together by default and may be selected with process flags for development or operational isolation. SQLite remains single-writer storage; running multiple writers against one database file over a network filesystem is unsupported.
 
+The application is multi-workspace by design in both community and hosted modes. A workspace is the v1 tenant/organization boundary. One user may belong to several workspaces through memberships, and one application instance may serve many workspaces from the same SQLite database. Self-hosters receive this capability without an artificial single-workspace restriction.
+
 ### 11.2 System diagram
 
 ```text
@@ -604,21 +606,25 @@ Community requirements:
 - `doctor` command checks integrity, migrations, WAL health, disk space, and backup age.
 - Before automatic upgrade migrations, create a local pre-migration backup unless explicitly disabled.
 
-### 12.6 Hosted scaling boundary
+### 12.6 Hosted multi-workspace and scaling boundary
 
 SQLite is a deliberate v1 simplification, not a claim of unlimited distributed scalability.
 
 Initial hosted operation uses:
 
-- one active application instance per database;
-- one separate SQLite database per hosted product workspace;
-- one SQLite database per cloud control-plane instance for accounts, subscriptions, entitlements, provisioning jobs, and Stripe webhook idempotency;
-- workspace-to-shard routing;
+- one public Mail for Agents application binary serving many workspaces;
+- one shared application SQLite database containing tenant-scoped product data for those workspaces;
+- one private cloud-controller binary with its own SQLite database for public signup, subscriptions, entitlements, provisioning jobs, Stripe webhook idempotency, and instance routing;
+- explicit `workspace_id` scoping on every tenant-owned row, query, job, event, API key, webhook, export, and cache key;
+- compound uniqueness and foreign-key constraints that include the workspace boundary where identity is tenant-local;
+- locked cross-workspace isolation tests for reads, writes, jobs, webhooks, exports, and agent operations;
 - object storage for backups and exports;
 - bounded event retention;
-- separate web processes only when they do not violate single-writer assumptions.
+- one active writer process per SQLite database.
 
-The v1 product, marketing site where persistence is ever required, and private cloud control plane use SQLite exclusively. PostgreSQL, MySQL, Redis, and external queues are not v1 dependencies or hidden requirements. Scaling occurs through complete tenant/database boundaries and single-writer routing, not concurrent writers against a shared file. SeaORM may preserve future backend portability, but no alternative database is designed or operated in v1.
+Paying for hosting creates a workspace and owner membership through an authenticated internal API; it does not create a container or database per customer. The same public binary and multi-workspace model are available to self-hosters. Public signup, Stripe credentials, hosted entitlement policy, abuse controls, fleet management, and support tooling remain responsibilities of the separate private cloud controller.
+
+The v1 product, marketing site where persistence is ever required, and private cloud controller use SQLite exclusively. PostgreSQL, MySQL, Redis, and external queues are not v1 dependencies or hidden requirements. “Unlimited customers” means no product-level customer cap, not infinite capacity from one server. When measured limits are reached, the hosted service adds another complete single-writer application instance and database, assigns new workspaces to it, and moves existing workspaces only through a tested tenant export/import procedure. SeaORM may preserve future backend portability, but no alternative database is designed or operated in v1.
 
 ---
 
@@ -3284,6 +3290,8 @@ The application may show a non-intrusive hosted option in documentation and sett
 - support;
 - optional managed AWS setup.
 
+The hosted service runs the same multi-workspace public application binary available to self-hosters. A small private cloud controller owns public registration, Stripe billing, hosted entitlements, workspace creation, suspension/reactivation, abuse controls, and instance assignment. A customer signup creates tenant records inside a running application instance; it does not provision a dedicated product fork, container, or database.
+
 ### 36.7 Distribution milestones inspired by Postiz
 
 - Excellent self-hosted launch before paid acquisition.
@@ -3308,7 +3316,7 @@ Durations are planning hypotheses for a focused small team, not commitments.
 - Rust workspace and CI.
 - Axum shell and xAI-console-inspired design system.
 - SeaORM migrations and SQLite settings.
-- Authentication, workspace, roles, audit.
+- Authentication, multi-workspace membership, tenant-scoped roles, cross-workspace isolation tests, and audit.
 - Background job engine.
 - Docker/single-binary release skeleton.
 
@@ -3388,8 +3396,11 @@ Recommended first 12:
 
 **Exit criteria:**
 
-- Tenant/shard operations.
-- Billing.
+- Private cloud controller deployed separately from the public product.
+- Public signup, Stripe Checkout, signed and idempotent webhooks, Customer Portal, subscriptions, and hosted entitlements.
+- Paid workspace creation through an authenticated internal API into the running multi-workspace public application.
+- Account, workspace, subscription, provisioning, suspension, reactivation, and cancellation state machines.
+- Instance assignment and tenant export/import procedure for later whole-instance sharding; no per-customer container provisioning.
 - Automated backups and restore drills.
 - Managed upgrades.
 - Abuse controls.
@@ -3492,7 +3503,7 @@ MVP does not require a freeform visual canvas, multiple email providers, a CRM p
 | Risk | Mitigation |
 |---|---|
 | “Mail for Agents” sounds like inboxes for agents | Always pair with “agent-native lifecycle email automation”; lead demos with workflows and SES |
-| SQLite becomes a hosted scaling bottleneck | Declare single-writer boundary, benchmark, shard workspaces, retain SeaORM portability |
+| SQLite becomes a hosted scaling bottleneck | Declare single-writer boundary, benchmark real multi-workspace load, add complete application/database instances, and move tenant boundaries through tested export/import rather than sharing a live file |
 | SES setup is intimidating | CloudFormation path, visual DNS checks, `doctor`, explicit remediation |
 | Playbooks overpromise | Evidence levels, visible assumptions, original copy, workspace experiments |
 | Patio11 association implies endorsement or copies protected material | Public-source attribution only; no naming/endorsement; legal/content review |
@@ -3521,7 +3532,8 @@ MVP does not require a freeform visual canvas, multiple email providers, a CRM p
 10. The v1 catalogue contains PB-01 through PB-25.
 11. Public expert sources may be attributed, but no endorsement is implied.
 12. The visual system is original while drawing on the restrained developer-console qualities visible in xAI’s public console.
-13. All v1 repositories use SQLite exclusively for persistence; hosted product workspaces receive separate database files and the cloud control plane remains single-writer per database.
+13. All v1 repositories use SQLite exclusively for persistence; one public application instance serves many tenant-scoped workspaces from a shared database, while the private cloud controller uses its own database and both remain single-writer per database.
+14. Multi-workspace support is part of the useful public product. Hosted billing creates workspace access in a running instance rather than provisioning one container or database per customer.
 
 ---
 
@@ -3681,4 +3693,3 @@ Before public launch, verify:
 ## Final product statement
 
 > **Mail for Agents is an open-source, agent-native lifecycle email automation platform. It connects to AWS SES, installs evidence-informed business playbooks, executes deterministic workflows, and lets humans and agents operate the customer lifecycle through one inspectable system.**
-
