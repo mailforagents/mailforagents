@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Mail for Agents product console">
+    <title>Console · Mail for Agents</title>
+    <link rel="stylesheet" href="/assets/console.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to workspace status</a>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Mail for Agents console">
+        <span class="brand-mark" aria-hidden="true">M</span>
+        <span>Mail for Agents</span>
+      </a>
+      <span class="environment">{{ deployment_label }}</span>
+      <span class="system-status"><span class="status-dot" aria-hidden="true"></span>Application ready</span>
+    </header>
+
+    <div class="shell">
+      <nav class="sidebar" aria-label="Product navigation">
+        <p class="nav-label">Workspace</p>
+        <a class="nav-item active" href="/" aria-current="page">Overview</a>
+        <span class="nav-item disabled" aria-disabled="true">Contacts <small>Planned</small></span>
+        <span class="nav-item disabled" aria-disabled="true">Workflows <small>Planned</small></span>
+        <span class="nav-item disabled" aria-disabled="true">Messages <small>Planned</small></span>
+        <p class="nav-label">Operate</p>
+        <a class="nav-item" href="/api/v1/capabilities">Capabilities</a>
+        <span class="nav-item disabled" aria-disabled="true">Settings <small>Planned</small></span>
+      </nav>
+
+      <main id="main" class="workspace">
+        <header class="command-header">
+          <div>
+            <p class="eyebrow">Workspace boundary</p>
+            <h1>Provisioning required</h1>
+            <p class="lede">The product runtime and tenant-safe database are ready. Sign-in and workspace provisioning are the next implementation slice.</p>
+          </div>
+          <span class="state-chip waiting">Waiting for account</span>
+        </header>
+
+        <section class="readiness" aria-labelledby="readiness-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Runtime</p>
+              <h2 id="readiness-title">System readiness</h2>
+            </div>
+            <a class="text-link" href="/readyz">Readiness endpoint</a>
+          </div>
+          <dl class="status-grid">
+            <div>
+              <dt>Application</dt>
+              <dd><span class="status-dot" aria-hidden="true"></span>Online</dd>
+              <p>Axum is accepting requests.</p>
+            </div>
+            <div>
+              <dt>Persistence</dt>
+              <dd><span class="status-dot" aria-hidden="true"></span>SQLite WAL</dd>
+              <p>Foreign keys and migrations are enforced.</p>
+            </div>
+            <div>
+              <dt>Tenant model</dt>
+              <dd><span class="status-dot" aria-hidden="true"></span>Multi-workspace</dd>
+              <p>Workspace memberships are structurally isolated.</p>
+            </div>
+          </dl>
+        </section>
+
+        <section class="next-steps" aria-labelledby="next-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Activation path</p>
+              <h2 id="next-title">What comes next</h2>
+            </div>
+          </div>
+          <ol class="step-list">
+            <li>
+              <span class="step-index">01</span>
+              <div><strong>Create an account</strong><p>Cloud signup and verified browser sessions.</p></div>
+              <span class="step-state">Next</span>
+            </li>
+            <li>
+              <span class="step-index">02</span>
+              <div><strong>Provision a workspace</strong><p>Owner membership and hosted entitlements.</p></div>
+              <span class="step-state">Planned</span>
+            </li>
+            <li>
+              <span class="step-index">03</span>
+              <div><strong>Connect AWS SES</strong><p>Sending identity, verification, and a safe test message.</p></div>
+              <span class="step-state">Planned</span>
+            </li>
+            <li>
+              <span class="step-index">04</span>
+              <div><strong>Install a playbook</strong><p>A measurable workflow replaces the blank canvas.</p></div>
+              <span class="step-state">Planned</span>
+            </li>
+          </ol>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

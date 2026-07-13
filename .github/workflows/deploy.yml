@@ -1,0 +1,106 @@
+name: Verify, publish, and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: mailforagents-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.93.0
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo check --locked
+      - run: cargo test --locked
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.image.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: image
+        run: echo "tag=sha-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/mailforagents/mailforagents:sha-${{ github.sha }}
+            ghcr.io/mailforagents/mailforagents:main
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    if: ${{ vars.COOLIFY_DEPLOY_ENABLED == 'true' }}
+    needs: publish
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Point Coolify at the immutable image
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          RESOURCE_UUID: ${{ vars.COOLIFY_RESOURCE_UUID }}
+          IMAGE_TAG: ${{ needs.publish.outputs.image_tag }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "{\"docker_registry_image_name\":\"ghcr.io/mailforagents/mailforagents\",\"docker_registry_image_tag\":\"${IMAGE_TAG}\"}" \
+            "${COOLIFY_URL%/}/api/v1/applications/${RESOURCE_UUID}"
+
+      - name: Deploy Coolify resource
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          RESOURCE_UUID: ${{ vars.COOLIFY_RESOURCE_UUID }}
+        run: |
+          response="$(curl --fail-with-body --silent --show-error \
+            --request GET \
+            --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+            "${COOLIFY_URL%/}/api/v1/deploy?uuid=${RESOURCE_UUID}&force=false")"
+          deployment_uuid="$(python3 -c 'import json,sys; data=json.load(sys.stdin); print((data.get("deployments") or [{}])[0].get("deployment_uuid", ""))' <<< "$response")"
+          test -n "$deployment_uuid"
+          echo "DEPLOYMENT_UUID=$deployment_uuid" >> "$GITHUB_ENV"
+
+      - name: Wait for deployment
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          for attempt in $(seq 1 60); do
+            payload="$(curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
+              "${COOLIFY_URL%/}/api/v1/deployments/${DEPLOYMENT_UUID}")"
+            status="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("status", "unknown"))' <<< "$payload")"
+            echo "attempt=${attempt} status=${status}"
+            case "$status" in
+              finished) exit 0 ;;
+              failed|cancelled) exit 1 ;;
+            esac
+            sleep 5
+          done
+          echo "Timed out waiting for Coolify deployment" >&2
+          exit 1
