@@ -68,7 +68,7 @@ jobs:
             --request PATCH \
             --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
             --header "Content-Type: application/json" \
-            --data "{\"docker_registry_image_name\":\"ghcr.io/mailforagents/mailforagents\",\"docker_registry_image_tag\":\"${IMAGE_TAG}\"}" \
+            --data "{\"docker_registry_image_name\":\"ghcr.io/mailforagents/mailforagents\",\"docker_registry_image_tag\":\"${IMAGE_TAG}\",\"domains\":\"https://app.mailforagents.com\",\"is_force_https_enabled\":true}" \
             "${COOLIFY_URL%/}/api/v1/applications/${RESOURCE_UUID}"
 
       - name: Deploy Coolify resource

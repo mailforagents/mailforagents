@@ -52,7 +52,8 @@ and operational data remain in the private `mailforagents-cloud` repository.
 
 GitHub Actions verifies the Rust workspace, publishes immutable images to
 `ghcr.io/mailforagents/mailforagents`, points the Coolify resource at the
-commit-specific image, deploys it, and waits for Coolify to report success.
+commit-specific image, enforces `https://app.mailforagents.com`, deploys it,
+and waits for Coolify to report success.
 
 Production deployment expects:
 
