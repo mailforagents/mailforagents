@@ -95,6 +95,7 @@ h2 { font-size: 1.15rem; line-height: 1.2; }
 .step-list strong { display: block; margin-bottom: .15rem; font-size: .92rem; }
 .step-state { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 .step-list li:first-child .step-state { color: var(--warning); }
+.product-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.5rem .25rem 0; color: var(--muted); font-size: .78rem; }
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 
@@ -112,6 +113,7 @@ h2 { font-size: 1.15rem; line-height: 1.2; }
   .status-grid { grid-template-columns: 1fr; }
   .status-grid > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .status-grid > div:last-child { border-bottom: 0; }
+  .product-footer { align-items: flex-start; flex-direction: column; gap: .25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -134,6 +134,8 @@ mod tests {
         let html = String::from_utf8(body.to_vec()).expect("UTF-8 body");
         assert!(html.contains("Provisioning required"));
         assert!(html.contains("Self-hosted"));
+        assert!(html.contains("AGPL-3.0-or-later"));
+        assert!(html.contains("https://github.com/mailforagents/mailforagents"));
         assert!(!html.contains("Create workflow</button>"));
     }
 

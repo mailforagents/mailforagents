@@ -60,3 +60,13 @@ Production deployment expects:
 - GitHub environment secrets `COOLIFY_URL` and `COOLIFY_TOKEN`;
 - GitHub environment variable `COOLIFY_RESOURCE_UUID`;
 - repository variable `COOLIFY_DEPLOY_ENABLED=true`.
+
+## License
+
+Copyright © 2026 Mail for Agents contributors.
+
+Mail for Agents is free software licensed under the
+[GNU Affero General Public License version 3 or later](LICENSE). If you run a
+modified version as a network service, the AGPL requires you to offer its
+corresponding source code to users of that service. The private cloud control
+plane is a separate work and is not included in this repository or license.
