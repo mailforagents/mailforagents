@@ -68,7 +68,7 @@ jobs:
         run: |
           test -n "$CF_ACCESS_CLIENT_ID"
           test -n "$CF_ACCESS_CLIENT_SECRET"
-          curl --fail-with-body --silent --show-error \
+          curl --location --max-redirs 0 --fail-with-body --silent --show-error \
             --request PATCH \
             --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
@@ -87,7 +87,7 @@ jobs:
         run: |
           test -n "$CF_ACCESS_CLIENT_ID"
           test -n "$CF_ACCESS_CLIENT_SECRET"
-          response="$(curl --fail-with-body --silent --show-error \
+          response="$(curl --location --max-redirs 0 --fail-with-body --silent --show-error \
             --request POST \
             --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
             --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
@@ -107,7 +107,7 @@ jobs:
           test -n "$CF_ACCESS_CLIENT_ID"
           test -n "$CF_ACCESS_CLIENT_SECRET"
           for attempt in $(seq 1 60); do
-            payload="$(curl --fail-with-body --silent --show-error \
+            payload="$(curl --location --max-redirs 0 --fail-with-body --silent --show-error \
               --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
               --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
               --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
