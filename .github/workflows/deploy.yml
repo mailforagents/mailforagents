@@ -59,13 +59,19 @@ jobs:
     steps:
       - name: Point Coolify at the immutable image
         env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
           RESOURCE_UUID: ${{ vars.COOLIFY_RESOURCE_UUID }}
           IMAGE_TAG: ${{ needs.publish.outputs.image_tag }}
         run: |
+          test -n "$CF_ACCESS_CLIENT_ID"
+          test -n "$CF_ACCESS_CLIENT_SECRET"
           curl --fail-with-body --silent --show-error \
             --request PATCH \
+            --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
             --header "Content-Type: application/json" \
             --data "{\"docker_registry_image_name\":\"ghcr.io/mailforagents/mailforagents\",\"docker_registry_image_tag\":\"${IMAGE_TAG}\",\"domains\":\"https://app.mailforagents.com\",\"is_force_https_enabled\":true}" \
@@ -73,12 +79,18 @@ jobs:
 
       - name: Deploy Coolify resource
         env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
           RESOURCE_UUID: ${{ vars.COOLIFY_RESOURCE_UUID }}
         run: |
+          test -n "$CF_ACCESS_CLIENT_ID"
+          test -n "$CF_ACCESS_CLIENT_SECRET"
           response="$(curl --fail-with-body --silent --show-error \
-            --request GET \
+            --request POST \
+            --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+            --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
             --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
             "${COOLIFY_URL%/}/api/v1/deploy?uuid=${RESOURCE_UUID}&force=false")"
           deployment_uuid="$(python3 -c 'import json,sys; data=json.load(sys.stdin); print((data.get("deployments") or [{}])[0].get("deployment_uuid", ""))' <<< "$response")"
@@ -87,11 +99,17 @@ jobs:
 
       - name: Wait for deployment
         env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
           COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
+          test -n "$CF_ACCESS_CLIENT_ID"
+          test -n "$CF_ACCESS_CLIENT_SECRET"
           for attempt in $(seq 1 60); do
             payload="$(curl --fail-with-body --silent --show-error \
+              --header "CF-Access-Client-Id: $CF_ACCESS_CLIENT_ID" \
+              --header "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
               --header "Authorization: Bearer ${COOLIFY_TOKEN}" \
               "${COOLIFY_URL%/}/api/v1/deployments/${DEPLOYMENT_UUID}")"
             status="$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("status", "unknown"))' <<< "$payload")"
